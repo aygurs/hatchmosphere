@@ -1,0 +1,24 @@
+# ============================================================
+#  Hatchmosphere — .gitignore
+# ============================================================
+
+# Local firmware credentials — never commit these
+src/config.h
+
+# Node modules
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Build outputs
+client/dist/
+.pio/
+
+# Environment files
+.env
+.env.local
+server/.env
+
+# OS
+.DS_Store
+Thumbs.db

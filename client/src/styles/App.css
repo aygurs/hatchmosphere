@@ -1,0 +1,531 @@
+/* ============================================================
+   Hatchmosphere — Style Guide
+   ============================================================ */
+
+/* Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Design tokens */
+:root {
+  --bg-dark:          #0d0d1a;
+  --bg-panel:         #13132b;
+  --border-color:     #2a2a5a;
+  --accent-purple:    #7c3aed;
+  --accent-cyan:      #06b6d4;
+  --accent-gold:      #f59e0b;
+  --text-primary:     #e2e8f0;
+  --text-secondary:   #94a3b8;
+  --text-muted:       #475569;
+  --error:            #ef4444;
+  --font-main:        'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono:        'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --radius:           12px;
+  --glow-purple:      0 0 20px rgba(124, 58, 237, 0.3);
+  --glow-cyan:        0 0 20px rgba(6, 182, 212, 0.3);
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ============================================================
+   Layout
+   ============================================================ */
+
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.app-main {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.left-panel,
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .app-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   Header
+   ============================================================ */
+
+.app-header {
+  text-align: center;
+  padding: 32px 0 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.app-title {
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple), var(--accent-gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+
+.app-tagline {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* ============================================================
+   Panels (shared card style)
+   ============================================================ */
+
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 20px;
+  transition: border-color 0.2s;
+}
+
+.panel:hover {
+  border-color: var(--accent-purple);
+}
+
+.panel-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* ============================================================
+   Sensor Panel
+   ============================================================ */
+
+.sensor-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sensor-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sensor-list li:last-child {
+  border-bottom: none;
+}
+
+.sensor-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.sensor-value {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--accent-cyan);
+}
+
+.sensor-timestamp {
+  font-size: 0.72rem !important;
+  color: var(--text-muted) !important;
+  font-style: italic;
+  justify-content: flex-end !important;
+}
+
+.loading-text {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ============================================================
+   Egg Panel
+   ============================================================ */
+
+.egg-panel {
+  text-align: center;
+  transition: box-shadow 0.4s, border-color 0.4s;
+}
+
+.egg-panel.egg-state-shadow  { border-color: #4b0082; box-shadow: 0 0 24px rgba(75, 0, 130, 0.4); }
+.egg-panel.egg-state-moon    { border-color: #b0c4de; box-shadow: 0 0 24px rgba(176, 196, 222, 0.2); }
+.egg-panel.egg-state-solar   { border-color: #ffd700; box-shadow: 0 0 24px rgba(255, 215, 0, 0.35); }
+.egg-panel.egg-state-bloom   { border-color: #7cfc00; box-shadow: 0 0 24px rgba(124, 252, 0, 0.25); }
+.egg-panel.egg-state-aquatic { border-color: #00bfff; box-shadow: 0 0 24px rgba(0, 191, 255, 0.3); }
+.egg-panel.egg-state-ember   { border-color: #ff4500; box-shadow: 0 0 24px rgba(255, 69, 0, 0.4); }
+.egg-panel.egg-state-nature  { border-color: #228b22; box-shadow: 0 0 24px rgba(34, 139, 34, 0.25); }
+
+.egg-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.egg-emoji {
+  font-size: 3rem;
+  display: block;
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Shaking egg — plays during the hatching sequence */
+.egg-emoji.egg-shaking {
+  animation: shake 0.4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  20%       { transform: translateX(-6px) rotate(-6deg); }
+  40%       { transform: translateX(6px) rotate(6deg); }
+  60%       { transform: translateX(-4px) rotate(-3deg); }
+  80%       { transform: translateX(4px) rotate(3deg); }
+}
+
+/* Pulsing "Hatching..." title */
+.hatching-title {
+  animation: pulse-text 0.8s ease-in-out infinite;
+}
+
+@keyframes pulse-text {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.egg-state-name {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.egg-description {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  max-width: 280px;
+}
+
+/* ============================================================
+   Hatch Button
+   ============================================================ */
+
+.hatch-panel {
+  text-align: center;
+}
+
+.hatch-button {
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+  color: white;
+  letter-spacing: 0.04em;
+  transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+  box-shadow: var(--glow-purple);
+}
+
+.hatch-button:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 0 32px rgba(124, 58, 237, 0.5);
+}
+
+.hatch-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.hatch-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.hatch-button.hatching {
+  animation: pulse-btn 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-btn {
+  0%, 100% { opacity: 0.7; }
+  50%       { opacity: 1; }
+}
+
+.hatching-message {
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* ============================================================
+   Creature Card
+   ============================================================ */
+
+.creature-card {
+  border-color: var(--accent-purple);
+  box-shadow: var(--glow-purple);
+}
+
+.creature-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+
+.creature-name {
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.creature-rarity {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.creature-type-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border: 1px solid;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.creature-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.detail-row {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.detail-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding-top: 2px;
+}
+
+.detail-value {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.detail-value.ability {
+  color: var(--accent-cyan);
+  font-weight: 500;
+}
+
+.detail-value.evolution-hint {
+  color: var(--accent-gold);
+  font-style: italic;
+}
+
+.hatching-reason {
+  background: rgba(124, 58, 237, 0.1);
+  border-left: 3px solid var(--accent-purple);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.hatch-time {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+/* ============================================================
+   Sources Panel
+   ============================================================ */
+
+.sources-panel {
+  border-color: #1e3a5f;
+}
+
+.sources-description {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.sources-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.source-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(6, 182, 212, 0.05);
+  border: 1px solid rgba(6, 182, 212, 0.15);
+  border-radius: 6px;
+}
+
+.source-name {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--accent-cyan);
+}
+
+.sources-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* ============================================================
+   Empty State
+   ============================================================ */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 60px 20px;
+  background: var(--bg-panel);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  min-height: 200px;
+}
+
+.empty-icon {
+  font-size: 3rem;
+}
+
+/* ============================================================
+   Hatch History
+   ============================================================ */
+
+.hatch-history {
+  margin-top: 8px;
+}
+
+.history-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.history-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.history-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 8px rgba(0, 255, 150, 0.2);
+}
+
+.history-item:active {
+  transform: scale(0.98);
+}
+
+.history-name {
+  font-weight: 600;
+}
+
+.history-type {
+  color: var(--text-secondary);
+}
+
+.history-rarity {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.history-time {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+}
+
+/* ============================================================
+   Error Banner
+   ============================================================ */
+
+.error-banner {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--error);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--error);
+  font-size: 0.9rem;
+  margin-top: 16px;
+}

@@ -1,0 +1,19 @@
+{
+  "name": "hatchmosphere-server",
+  "version": "1.0.0",
+  "description": "Hatchmosphere backend — receives ESP8266 sensor data and generates creatures",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "@azure/search-documents": "^13.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

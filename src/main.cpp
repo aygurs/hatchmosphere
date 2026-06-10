@@ -78,6 +78,7 @@ char ledEffect[16] = "solid";
 // Internal timing for LED animations
 unsigned long ledLastUpdate = 0;
 int           ledFlashState = 0;     // for flash effect (on/off toggle)
+int           ledPulsePhase = 0;     // for pulse effect (0-255, controls brightness)
 
 // ============================================================
 // LED Helper Functions
@@ -109,6 +110,30 @@ void updateLED() {
     } else {
       writeLED(0, 0, 0);
     }
+  } else if (strcmp(ledEffect, "pulse") == 0) {
+    // Pulsating effect: smoothly brighten/dim using sine wave
+    // Phase goes 0-255, repeat every 1000ms
+    if (now - ledLastUpdate >= 20) {  // Update every 20ms for smooth pulse
+      ledLastUpdate = now;
+      ledPulsePhase = (ledPulsePhase + 1) % 256;
+    }
+    // Use sine-like brightness curve: (1 + sin(phase)) / 2 gives 0.0 to 1.0
+    // Approximated with simple ramp: 0->128->255->128->0
+    int brightness;
+    if (ledPulsePhase < 64) {
+      brightness = ledPulsePhase * 4;           // 0 -> 255
+    } else if (ledPulsePhase < 128) {
+      brightness = 255 - (ledPulsePhase - 64) * 4;  // 255 -> 0
+    } else if (ledPulsePhase < 192) {
+      brightness = (ledPulsePhase - 128) * 4;  // 0 -> 255
+    } else {
+      brightness = 255 - (ledPulsePhase - 192) * 4; // 255 -> 0
+    }
+    // Apply brightness to LED color
+    int r = (ledR * brightness) / 255;
+    int g = (ledG * brightness) / 255;
+    int b = (ledB * brightness) / 255;
+    writeLED(r, g, b);
   } else {
     // Default: solid colour
     writeLED(ledR, ledG, ledB);

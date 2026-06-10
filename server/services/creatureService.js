@@ -249,6 +249,16 @@ function buildHatchingReason(reading, type) {
 }
 
 // ---------------------------------------------------------------
+// Determine LED effect based on rarity.
+// Common/Uncommon: solid
+// Rare and above: pulse (pulsating color)
+// ---------------------------------------------------------------
+function determineLedEffect(rarity) {
+  const highRarities = ['Rare', 'Ultra Rare', 'Legendary', 'Mythic'];
+  return highRarities.includes(rarity) ? 'pulse' : 'solid';
+}
+
+// ---------------------------------------------------------------
 // Main export — generates a full creature from a sensor reading.
 // ---------------------------------------------------------------
 async function generateCreature(reading) {
@@ -259,6 +269,9 @@ async function generateCreature(reading) {
   const knowledgeSnippets = await foundryIq.retrieveKnowledge(reading, type);
   const sourcesUsed = foundryIq.extractSourceNames(knowledgeSnippets);
 
+  // Determine rarity first (needed for LED effect)
+  const rarity = determineRarity(reading, template);
+
   // Pick random name, ability, and evolution hint for variety
   const name = template.names[Math.floor(Math.random() * template.names.length)];
   const ability = template.abilities[Math.floor(Math.random() * template.abilities.length)];
@@ -267,7 +280,7 @@ async function generateCreature(reading) {
   return {
     name,
     type,
-    rarity: determineRarity(reading, template),
+    rarity,
     personality: determinePersonality(reading.interactionCount, type),
     habitat: template.habitat,
     ability,
@@ -278,7 +291,7 @@ async function generateCreature(reading) {
     r: template.ledR,
     g: template.ledG,
     b: template.ledB,
-    ledEffect: template.ledEffect,
+    ledEffect: determineLedEffect(rarity),
     // Metadata
     hatchedAt: new Date().toISOString(),
     environmentSnapshot: { ...reading },

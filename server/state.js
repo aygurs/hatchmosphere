@@ -13,7 +13,9 @@ const state = {
 
   // The current LED command that the ESP8266 should apply
   deviceCommand: {
-    ledColor: '#ffffff',
+    ledR: 255,
+    ledG: 255,
+    ledB: 255,
     ledEffect: 'solid',
     message: 'Waiting to hatch...',
   },

@@ -9,6 +9,7 @@ Hatchmosphere is a sensor-powered creature incubator with knowledge-based genera
 ## Architecture
 
 ```
+
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                        [HATCHMOSPHERE SYSTEM]                               │
 └─────────────────────────────────────────────────────────────────────────────┘

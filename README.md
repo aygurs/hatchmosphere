@@ -2,34 +2,40 @@
 
 > **Where your environment decides what hatches.**
 
-Hatchmosphere is a sensor-powered AI creature incubator. A physical ESP8266 device reads real-world environmental data - light level, temperature, humidity, and button interactions - and sends it to a Node.js/Express backend. A React/Vite web app displays the current egg conditions and lets you hatch an egg. When the egg hatches, the backend generates a unique creature profile based on the sensor readings, grounded in a knowledge layer.
+Hatchmosphere is a sensor-powered creature incubator with knowledge-based generation. A physical ESP8266 device reads real-world environmental data - light level, temperature, humidity, and button interactions - and sends it to a Node.js/Express backend. A React/Vite web app displays the current egg conditions and lets you hatch an egg. When the egg hatches, the backend generates a unique creature profile based on sensor readings, enriched with knowledge snippets retrieved from a Foundry IQ semantic search layer (Azure AI Search).
 
 ---
 
 ## Architecture
 
 ```
-[ESP8266 Device]
-  LDR (Light)          ──┐
-  DHT11/22 (Temp/Hum)  ──┼──> POST /api/device-reading ──> [Node.js Server]
-  Push Button          ──┘                                        │
-                                                       ┌──────────┴──────────┐
-                                                       │   In-Memory State   │
-                                                       │  (latest reading)   │
-                                                       └──────────┬──────────┘
-[React/Vite Frontend]                                             │
-  SensorPanel   ──> GET /api/latest-reading (every 2s) ──────────┘
-  EggPanel      ──> (derived from sensor values)
-  HatchButton   ──> POST /api/hatch ──> creatureService.js
-                                              │
-                                    foundryIqService.js
-                                    (Azure AI Search / Foundry IQ)
-                                              │
-                                    Returns creature + sources
-                                              │
-                    GET /api/device-command <── deviceCommand updated
-                           │
-                    [ESP8266 RGB LED]
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        [HATCHMOSPHERE SYSTEM]                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+[ESP8266 Hardware]                    [Node.js/Express Server]
+  • LDR (Light) → A0                    • state.js (in-memory)
+  • DHT11 (Temp/Humidity) → D2            • /api/device-reading
+  • Button (Interaction) → D1 (ext)       • /api/latest-reading
+  • RGB LED (Common-anode) → D7/D6/D5    • /api/hatch
+                                          • /api/device-command
+         ↓ HTTP POST (every 2s)           ↓ (creatureService.js)
+    /api/device-reading              [Knowledge Retrieval]
+         ↓                              ↓ (foundryIqService.js)
+[React/Vite Frontend]         [Azure AI Search]
+  • App.jsx (polling 2s)          • Semantic search
+  • EggPanel (sensor state)        • Docs indexed:
+  • SensorPanel (live data)          - hatching-rules.md
+  • HatchButton (trigger hatch)      - creature-types.md
+  • HatchHistory (saved creatures)   - biomes.md
+  • CreatureCard (hatch result)      - evolution-rules.md
+  • SourcesPanel (sources used)      • Fallback: mock data
+         ↓                           ↓
+    /api/hatch                Returns creature profile
+         ↓                     + sourcesUsed
+    /api/device-command ←─────────────
+         ↓
+  [ESP8266 RGB LED Flash/Solid]
 ```
 
 ---
@@ -38,44 +44,59 @@ Hatchmosphere is a sensor-powered AI creature incubator. A physical ESP8266 devi
 
 ```
 hatchmosphere/
-  client/                       React/Vite web app
+  client/                       React/Vite frontend
+    public/
     src/
-      App.jsx                   Root component, polling, hatch handler
+      App.jsx                   Root component (sensor polling, hatch orchestration)
       main.jsx                  React entry point
       components/
-        EggPanel.jsx            Shows egg state based on sensor readings
-        SensorPanel.jsx         Displays live sensor values
-        CreatureCard.jsx        Creature profile card after hatch
-        HatchButton.jsx         Triggers the hatch POST request
-        SourcesPanel.jsx        Shows knowledge sources used
+        EggPanel.jsx            Displays egg state from current sensor reading
+        SensorPanel.jsx         Shows live light/temperature/humidity/interactions
+        CreatureCard.jsx        Full creature profile after hatching
+        HatchButton.jsx         Hatch trigger button with animation
+        HatchHistory.jsx        Clickable grid of hatched creatures
+        SourcesPanel.jsx        Knowledge documents used for this creature
       services/
-        api.js                  All fetch calls to the backend
+        api.js                  All HTTP calls to backend
       styles/
         App.css                 Dark magical/tech theme
+    package.json
+    vite.config.js
 
   server/                       Node.js/Express backend
-    index.js                    App entry point
-    state.js                    Shared in-memory state module
+    index.js                    App entry, middleware, route registration
+    state.js                    In-memory shared state module
+    .env                        Azure credentials (git-ignored)
     routes/
-      device.js                 /api/device-reading, /api/latest-reading, /api/device-command
-      hatch.js                  /api/hatch
+      device.js                 GET/POST /api/device-reading, /api/latest-reading
+      hatch.js                  POST /api/hatch, /api/set-led
     services/
-      creatureService.js        Generates creatures from sensor data
-      foundryIqService.js       Retrieves knowledge from Azure AI Search via Foundry IQ
+      creatureService.js        Generates creature from sensor data + knowledge
+      foundryIqService.js       Azure AI Search semantic search integration
     data/
-      mockKnowledge.js          Fallback knowledge snippets (used if Azure not configured)
-    docs/
-      hatching-rules.md         Indexed knowledge documents
-      creature-types.md
-      biomes.md
-      evolution-rules.md
+      mockKnowledge.js          Fallback knowledge (when Azure not configured)
+    package.json
+    package-lock.json
 
-  firmware/                     ESP8266 PlatformIO project
-    platformio.ini              Board and library config
-    src/
-      main.cpp                  Sensor reading, Wi-Fi, HTTP POST/GET, LED TODO
+  docs/                         Knowledge base for semantic indexing
+    hatching-rules.md           Environmental effects on creature types
+    creature-types.md           Traits, abilities, habitats per type
+    biomes.md                   Biome descriptions and origins
+    evolution-rules.md          Evolution paths and rarity mechanics
 
+  scripts/
+    index-docs.js               One-time: Create Azure index + upload docs
+
+  src/                          ESP8266 firmware (PlatformIO)
+    main.cpp                    Sensor reading, Wi-Fi, HTTP, LED control
+    config.h                    Wi-Fi + server credentials
+    config.h.example            Template for config.h
+
+  platformio.ini                Board config (ESP8266 NodeMCU v2)
+  .gitignore
+  LICENSE
   README.md
+  package.json                  Root (for convenience scripts)
 ```
 
 ---
@@ -110,27 +131,45 @@ Client starts on `http://localhost:5173`. The Vite dev proxy forwards all `/api`
 
 ### 3. Firmware (ESP8266)
 
-1. Open the `firmware/` folder in VS Code with PlatformIO installed.
-2. Edit `firmware/src/main.cpp`:
-   - Set `WIFI_SSID` and `WIFI_PASSWORD`.
-   - Set `SERVER_IP` to your laptop's local IP address.
-     - **Windows:** run `ipconfig` → look for *IPv4 Address*
-     - **Mac/Linux:** run `ifconfig` or `ip addr`
-3. Connect your ESP8266 via USB.
-4. Click **Upload** in PlatformIO, or run `pio run --target upload` in a terminal.
-5. Open the Serial Monitor (`pio device monitor`) to see live logs.
+1. Copy `src/config.h.example` to `src/config.h` and fill in your values:
+   ```cpp
+   #define WIFI_SSID     "YOUR_WIFI_NAME"
+   #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+   #define SERVER_IP     "YOUR_LAPTOP_IP"        // e.g., 192.168.1.100
+   #define SERVER_PORT   3000
+   ```
+
+2. Find your laptop's local IP:
+   - **Windows:** `ipconfig` → look for *IPv4 Address*
+   - **Mac/Linux:** `ifconfig` or `ip addr`
+
+3. With PlatformIO installed in VS Code:
+   - Open the project folder containing `platformio.ini`
+   - Click **Upload** in the PlatformIO sidebar, or run:
+     ```bash
+     pio run --target upload
+     ```
+
+4. View serial output:
+   ```bash
+   pio device monitor
+   ```
+   You should see logs showing Wi-Fi connection, sensor readings, and LED commands.
 
 ---
 
 ## API Reference
 
-| Method | Endpoint                | Description                                       |
-|--------|-------------------------|---------------------------------------------------|
-| POST   | `/api/device-reading`   | ESP8266 sends latest sensor values                |
-| GET    | `/api/latest-reading`   | Frontend polls current sensor reading             |
-| POST   | `/api/hatch`            | Frontend triggers egg hatch; returns creature     |
-| GET    | `/api/device-command`   | ESP8266 polls for LED colour/effect to display    |
-| GET    | `/health`               | Server health check                               |
+| Method | Endpoint                | Description                                              |
+|--------|-------------------------|----------------------------------------------------------|
+| POST   | `/api/device-reading`   | ESP8266 POSTs sensor data; returns LED command           |
+| GET    | `/api/latest-reading`   | Frontend polls current sensor state                      |
+| GET    | `/api/device-command`   | ESP8266 polls for LED colour/effect to display           |
+| POST   | `/api/hatch-start`      | Frontend triggers animation start; LED flashes white     |
+| POST   | `/api/hatch`            | Frontend generates creature from snapshot; returns data  |
+| POST   | `/api/set-led`          | Frontend syncs LED when viewing history creature         |
+| GET    | `/api/hatched`          | Frontend fetches all creatures hatched this session      |
+| GET    | `/health`               | Server health check                                      |
 
 ---
 
@@ -152,9 +191,15 @@ The egg type is derived from the current sensor reading in real time:
 
 ## Foundry IQ / Azure AI Search Integration
 
-✅ **LIVE** — The knowledge layer is now integrated with Azure AI Search.
+The knowledge layer lives in `server/services/foundryIqService.js`. When a creature is hatched, it performs **semantic search** queries against Azure AI Search to retrieve relevant knowledge snippets based on creature type and sensor conditions. These snippets inform the creature's traits and are returned alongside the creature data. If Azure credentials are not configured, it gracefully falls back to local mock knowledge.
 
-The knowledge layer lives in `server/services/foundryIqService.js`. It performs **semantic search** queries against Azure AI Search to retrieve relevant knowledge snippets based on creature type and sensor conditions. If Azure credentials are not configured, it gracefully falls back to local mock knowledge.
+**How it works:**
+1. ESP8266 sends sensor reading (light, temp, humidity, interactions)
+2. `creatureService.js` determines creature type from sensor ranges
+3. `foundryIqService.js` queries Azure AI Search: *"[CreatureType] creature hatching environment incubation"*
+4. Semantic search returns top 4 knowledge snippets
+5. Creature is generated with traits informed by the retrieved knowledge
+6. Frontend displays creature + sources (which documents were used)
 
 ### Setup
 
@@ -187,13 +232,13 @@ When a creature is hatched, `foundryIqService.js` queries the index with the cre
 
 ---
 
-## GitHub Copilot Usage
+## Development with GitHub Copilot
 
 This project was scaffolded with **GitHub Copilot** (Claude Sonnet 4.6).
 
 Copilot assisted with:
 - Generating the initial project structure and boilerplate
-- Writing the creature generation logic in `creatureService.js`
+- Writing the procedural creature generation logic in `creatureService.js`
 - Designing the dark magical CSS theme for the React frontend
 - Writing beginner-friendly, well-commented ESP8266 firmware
 
@@ -201,15 +246,43 @@ This allowed for fast prototyping and creation of an MVP within a couple of days
 
 ---
 
-## Hardware List
+## Hardware List & Wiring
 
-| Component                  | Purpose                       | Notes                           |
-|----------------------------|-------------------------------|---------------------------------|
-| ESP8266 NodeMCU v2         | Main microcontroller          | Any ESP8266 board works         |
-| LDR + 10kΩ resistor        | Light level sensing (A0)      | Voltage divider to GND          |
-| DHT11 or DHT22             | Temperature + humidity        | See TODO in `main.cpp`          |
-| Push button                | Interaction counting          | D3 (GPIO 0), active LOW         |
-| RGB LED or NeoPixel        | Visual creature feedback      | D5–D7, see TODO in `main.cpp`   |
+| Component              | Pin(s)       | Notes                                                  |
+|------------------------|--------------|--------------------------------------------------------|
+| ESP8266 NodeMCU v2     | —            | Main microcontroller (3.3V logic)                     |
+| RGB LED (common anode) | D7, D6, D5   | Each pin with 220Ω current-limiting resistor; common pin to 3.3V |
+| LDR (light sensor)     | A0           | Voltage divider: LDR to 3.3V, 10kΩ resistor to GND  |
+| DHT11/22 (temp/humid)  | D2           | Data pin to D2, pull-up resistor built-in or 10kΩ to 3.3V |
+| Push button            | D1 (GPIO 5)  | One leg to D1, other to GND; external 10kΩ pull-up to 3.3V; active HIGH |
+
+### Detailed Wiring
+
+**RGB LED (Common Anode):**
+```
+  R (pin 1)     ──[220Ω]── D7 (GPIO 13)
+  G (pin 2)     ──[220Ω]── D6 (GPIO 12)
+  B (pin 3)     ──[220Ω]── D5 (GPIO 14)
+  Common (long) ───────────── 3.3V
+```
+
+**LDR (Voltage Divider):**
+```
+  3.3V ──[LDR]── A0 ──[10kΩ]── GND
+```
+
+**Push Button (with External Pull-Up):**
+```
+  3.3V ──[10kΩ]── D1 ──[Button]── GND
+```
+
+**DHT11/22:**
+```
+  VCC (1) ────── 3.3V
+  Data(2) ──[10kΩ]── 3.3V (pull-up)
+  Data(2) ────── D2
+  GND (4) ────── GND
+```
 
 ---
 

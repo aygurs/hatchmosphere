@@ -253,6 +253,77 @@ function buildHatchingReason(reading, type) {
 // Common/Uncommon: solid
 // Rare and above: pulse (pulsating color)
 // ---------------------------------------------------------------
+// Extract meaningful keywords from knowledge snippets.
+// Filters out common stop words to find actual meaningful terms.
+// ---------------------------------------------------------------
+function extractKeywordsFromKnowledge(snippets) {
+  const stopWords = new Set([
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
+    'from', 'up', 'about', 'into', 'through', 'during', 'is', 'are', 'was', 'were', 'be',
+    'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+    'should', 'may', 'might', 'can', 'that', 'this', 'it', 'as', 'if', 'than',
+  ]);
+
+  const keywordCounts = {};
+  
+  snippets.forEach((snippet) => {
+    // Split on whitespace and punctuation, convert to lowercase
+    const words = snippet.content.toLowerCase().split(/[\s\-.,!?;:()]+/).filter(Boolean);
+    
+    words.forEach((word) => {
+      // Only keep words >= 4 chars and not in stop words
+      if (word.length >= 4 && !stopWords.has(word)) {
+        keywordCounts[word] = (keywordCounts[word] || 0) + 1;
+      }
+    });
+  });
+
+  return keywordCounts;
+}
+
+// ---------------------------------------------------------------
+// Score a trait (ability, personality, evolution hint) based on
+// how well it matches the extracted knowledge keywords.
+// ---------------------------------------------------------------
+function scoreTraitAgainstKnowledge(trait, keywords) {
+  const traitLower = trait.toLowerCase();
+  let score = 1; // Base score
+  
+  Object.entries(keywords).forEach(([keyword, count]) => {
+    // Direct word match or substring match (for compound traits)
+    if (traitLower.includes(keyword)) {
+      score += count * 2; // Weight direct matches heavily
+    }
+  });
+
+  return score;
+}
+
+// ---------------------------------------------------------------
+// Select a trait using weighted random selection based on knowledge.
+// ---------------------------------------------------------------
+function selectTraitFromKnowledge(traitOptions, keywords) {
+  if (!traitOptions || traitOptions.length === 0) return '';
+  
+  // Score each option
+  const scores = traitOptions.map((trait) => scoreTraitAgainstKnowledge(trait, keywords));
+  
+  // Weighted random selection
+  const totalScore = scores.reduce((a, b) => a + b, 0);
+  let random = Math.random() * totalScore;
+  
+  for (let i = 0; i < traitOptions.length; i++) {
+    random -= scores[i];
+    if (random <= 0) {
+      return traitOptions[i];
+    }
+  }
+  
+  // Fallback (shouldn't reach here)
+  return traitOptions[Math.floor(Math.random() * traitOptions.length)];
+}
+
+// ---------------------------------------------------------------
 function determineLedEffect(rarity) {
   const highRarities = ['Rare', 'Ultra Rare', 'Legendary', 'Mythic'];
   return highRarities.includes(rarity) ? 'pulse' : 'solid';
@@ -269,13 +340,20 @@ async function generateCreature(reading) {
   const knowledgeSnippets = await foundryIq.retrieveKnowledge(reading, type);
   const sourcesUsed = foundryIq.extractSourceNames(knowledgeSnippets);
 
+  // Extract keywords from knowledge to inform trait selection
+  const keywords = extractKeywordsFromKnowledge(knowledgeSnippets);
+
   // Determine rarity first (needed for LED effect)
   const rarity = determineRarity(reading, template);
 
-  // Pick random name, ability, and evolution hint for variety
+  // Pick name (always random, not influenced by knowledge)
   const name = template.names[Math.floor(Math.random() * template.names.length)];
-  const ability = template.abilities[Math.floor(Math.random() * template.abilities.length)];
-  const evolutionHint = template.evolutionHints[Math.floor(Math.random() * template.evolutionHints.length)];
+  
+  // Pick ability using knowledge-informed weighted selection
+  const ability = selectTraitFromKnowledge(template.abilities, keywords);
+  
+  // Pick evolution hint using knowledge-informed weighted selection
+  const evolutionHint = selectTraitFromKnowledge(template.evolutionHints, keywords);
 
   return {
     name,

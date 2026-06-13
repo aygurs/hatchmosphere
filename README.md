@@ -8,36 +8,7 @@ Hatchmosphere is a sensor-powered creature incubator with knowledge-based genera
 
 ## Architecture
 
-```
-
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        [HATCHMOSPHERE SYSTEM]                               │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-[ESP8266 Hardware]                    [Node.js/Express Server]
-  • LDR (Light) → A0                    • state.js (in-memory)
-  • DHT11 (Temp/Humidity) → D2            • /api/device-reading
-  • Button (Interaction) → D1 (ext)       • /api/latest-reading
-  • RGB LED (Common-anode) → D7/D6/D5    • /api/hatch
-                                          • /api/device-command
-         ↓ HTTP POST (every 2s)           ↓ (creatureService.js)
-    /api/device-reading              [Knowledge Retrieval]
-         ↓                              ↓ (foundryIqService.js)
-[React/Vite Frontend]         [Azure AI Search]
-  • App.jsx (polling 2s)          • Semantic search
-  • EggPanel (sensor state)        • Docs indexed:
-  • SensorPanel (live data)          - hatching-rules.md
-  • HatchButton (trigger hatch)      - creature-types.md
-  • HatchHistory (saved creatures)   - biomes.md
-  • CreatureCard (hatch result)      - evolution-rules.md
-  • SourcesPanel (sources used)      • Fallback: mock data
-         ↓                           ↓
-    /api/hatch                Returns creature profile
-         ↓                     + sourcesUsed
-    /api/device-command ←─────────────
-         ↓
-  [ESP8266 RGB LED Flash/Solid]
-```
+<img width="2172" height="724" alt="ChatGPT Image Jun 13, 2026, 07_46_35 PM" src="https://github.com/user-attachments/assets/f899e38b-0c20-4b50-8ca0-d99ed6a30d9c" />
 
 ---
 

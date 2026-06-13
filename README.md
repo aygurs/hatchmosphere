@@ -261,3 +261,7 @@ This allowed for fast prototyping and creation of an MVP within a couple of days
 ## License
 
 MIT
+
+## Student Status
+
+I am currently a student at the Unversity of London in my 3rd year of my Computer Science Bachelors degree. I also am currently at an industrial placement working as a Software Engineer at Zebra Technologies and started in July 2025.
